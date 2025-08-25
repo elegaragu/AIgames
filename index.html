@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las 10 Puertas de la IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            transition: background-color 0.5s ease-in-out;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .door {
+            width: 80px;
+            height: 120px;
+            background-color: #4a5568;
+            border: 4px solid #cbd5e0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: transform 0.5s ease-in-out, background-color 0.3s ease;
+            position: relative;
+        }
+
+        .door.unlocked {
+            background-color: #48bb78;
+            box-shadow: 0 0 15px #48bb78, 0 0 20px #48bb78, 0 0 25px #48bb78;
+            transform: scale(1.1) rotateY(180deg);
+        }
+
+        .door-unlocked-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            animation: pulse-message 1.5s infinite;
+        }
+
+        @keyframes pulse-message {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+        }
+
+        .answer-button {
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+        }
+
+        .answer-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .answer-button.correct {
+            background-color: #48bb78;
+            border-color: #2f855a;
+            color: white;
+        }
+
+        .answer-button.incorrect {
+            background-color: #f56565;
+            border-color: #c53030;
+            color: white;
+        }
+
+        .door-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            justify-items: center;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .door-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .door-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="game-container" class="game-container">
+        <h1 class="text-4xl font-bold text-gray-800 text-center mb-6">El Misterio de las 10 Puertas de la IA</h1>
+        <p class="text-xl text-gray-600 text-center mb-10">¡Responde correctamente para avanzar!</p>
+
+        <div id="door-display" class="w-full flex justify-center mb-8">
+            <div id="current-door" class="door">1</div>
+        </div>
+
+        <div id="game-interface" class="w-full max-w-lg bg-white p-8 rounded-lg shadow-lg">
+            <p id="question-text" class="text-lg text-gray-800 font-semibold mb-6 text-center"></p>
+            <div id="answers-container" class="flex flex-col space-y-4">
+                </div>
+            <p id="message" class="text-center mt-6 font-bold"></p>
+        </div>
+
+        <div id="door-grid" class="door-grid">
+            </div>
+
+    </div>
+
+    <script>
+        // Array of questions about AI with multiple-choice answers
+        const questions = [
+            {
+                question: "¿Qué significa el acrónimo 'IA'?",
+                answers: ["Inversión Avanzada", "Inteligencia Artificial", "Innovación Automática", "Interacción Adaptativa"],
+                correct: "Inteligencia Artificial"
+            },
+            {
+                question: "¿Cuál de estos es un subcampo de la IA?",
+                answers: ["Computación Cuántica", "Robótica", "Aprendizaje Automático", "Análisis de Datos"],
+                correct: "Aprendizaje Automático"
+            },
+            {
+                question: "¿Qué es un 'chatbot'?",
+                answers: ["Un tipo de robot de limpieza", "Un programa de IA que simula una conversación", "Un error de software", "Un tipo de virus informático"],
+                correct: "Un programa de IA que simula una conversación"
+            },
+            {
+                question: "¿Quién es a menudo considerado el 'padre de la IA'?",
+                answers: ["Steve Jobs", "Bill Gates", "Alan Turing", "Elon Musk"],
+                correct: "Alan Turing"
+            },
+            {
+                question: "¿Qué tipo de IA se utiliza para el reconocimiento de imágenes?",
+                answers: ["Sistemas Expertos", "Lógica Difusa", "Redes Neuronales Convolucionales (CNN)", "Algoritmos Genéticos"],
+                correct: "Redes Neuronales Convolucionales (CNN)"
+            },
+            {
+                question: "¿Qué es el 'Aprendizaje Profundo' (Deep Learning)?",
+                answers: ["Un método para enseñar a los niños", "Un tipo de buceo", "Un subconjunto del Aprendizaje Automático", "Un campo de la psicología"],
+                correct: "Un subconjunto del Aprendizaje Automático"
+            },
+            {
+                question: "¿Cuál de estos es un ejemplo de IA en la vida cotidiana?",
+                answers: ["Una tostadora", "Un motor de combustión", "El asistente de voz en tu teléfono", "Un interruptor de luz"],
+                correct: "El asistente de voz en tu teléfono"
+            },
+            {
+                question: "¿Qué significa el término 'Singularidad' en el contexto de la IA?",
+                answers: ["Una canción popular", "Un punto en el que la IA supera la inteligencia humana", "Un tipo de error de cálculo", "Una falla de seguridad"],
+                correct: "Un punto en el que la IA supera la inteligencia humana"
+            },
+            {
+                question: "¿Qué es un desafío ético importante de la IA?",
+                answers: ["El alto costo de la electricidad", "El sesgo en los datos de entrenamiento", "La falta de espacio de almacenamiento", "La dificultad de programar"],
+                correct: "El sesgo en los datos de entrenamiento"
+            },
+            {
+                question: "¿Cuál es el objetivo principal de la IA?",
+                answers: ["Crear máquinas que puedan pensar y aprender", "Construir robots humanoides", "Reemplazar todos los trabajos humanos", "Hacer que las computadoras sean más rápidas"],
+                correct: "Crear máquinas que puedan pensar y aprender"
+            }
+        ];
+
+        // --- Game state variables ---
+        let currentDoorIndex = 0;
+        const currentDoorElement = document.getElementById('current-door');
+        const questionTextElement = document.getElementById('question-text');
+        const answersContainer = document.getElementById('answers-container');
+        const messageElement = document.getElementById('message');
+        const doorGrid = document.getElementById('door-grid');
+
+        // Function to initialize the door grid
+        function initializeDoorGrid() {
+            try {
+                doorGrid.innerHTML = '';
+                for (let i = 0; i < questions.length; i++) {
+                    const door = document.createElement('div');
+                    door.classList.add('door', 'relative');
+                    door.id = `door-grid-${i}`;
+                    door.textContent = i + 1;
+                    doorGrid.appendChild(door);
+                }
+            } catch (error) {
+                console.error("Error initializing door grid:", error);
+            }
+        }
+
+        // Function to load the current door's question
+        function loadQuestion() {
+            try {
+                if (currentDoorIndex < questions.length) {
+                    const currentQuestion = questions[currentDoorIndex];
+                    questionTextElement.textContent = currentQuestion.question;
+                    answersContainer.innerHTML = '';
+                    messageElement.textContent = '';
+
+                    // Create buttons for each answer
+                    currentQuestion.answers.forEach(answer => {
+                        const button = document.createElement('button');
+                        button.classList.add(
+                            'answer-button',
+                            'w-full',
+                            'py-3',
+                            'px-6',
+                            'rounded-full',
+                            'border-2',
+                            'border-gray-300',
+                            'text-gray-700',
+                            'font-semibold',
+                            'bg-gray-200'
+                        );
+                        button.textContent = answer;
+                        button.onclick = () => checkAnswer(answer);
+                        answersContainer.appendChild(button);
+                    });
+                    
+                    // Update the displayed door number
+                    currentDoorElement.textContent = currentDoorIndex + 1;
+                } else {
+                    // Game completed
+                    endGame();
+                }
+            } catch (error) {
+                console.error("Error loading question:", error);
+            }
+        }
+
+        // Function to check the user's answer
+        function checkAnswer(selectedAnswer) {
+            try {
+                const currentQuestion = questions[currentDoorIndex];
+                const allButtons = answersContainer.querySelectorAll('button');
+
+                // Disable all buttons to prevent multiple clicks
+                allButtons.forEach(button => button.disabled = true);
+
+                if (selectedAnswer === currentQuestion.correct) {
+                    // Correct answer logic
+                    messageElement.textContent = "¡Respuesta correcta! ¡Puerta desbloqueada!";
+                    messageElement.classList.add('text-green-600');
+                    
+                    // Find the button for the correct answer and style it
+                    allButtons.forEach(button => {
+                        if (button.textContent === selectedAnswer) {
+                            button.classList.remove('bg-gray-200', 'border-gray-300', 'text-gray-700');
+                            button.classList.add('correct', 'bg-green-500', 'border-green-600', 'text-white');
+                        }
+                    });
+
+                    // Animate the main door and the one in the grid
+                    const mainDoor = document.getElementById('current-door');
+                    const gridDoor = document.getElementById(`door-grid-${currentDoorIndex}`);
+                    
+                    if (mainDoor) {
+                        mainDoor.classList.add('unlocked');
+                        const unlockedMessage = document.createElement('div');
+                        unlockedMessage.classList.add('door-unlocked-message');
+                        unlockedMessage.textContent = "¡Abierta!";
+                        mainDoor.appendChild(unlockedMessage);
+                    }
+                    if (gridDoor) {
+                        gridDoor.classList.add('unlocked');
+                    }
+                    
+                    // Advance to the next door after a delay
+                    setTimeout(() => {
+                        currentDoorIndex++;
+                        if (currentDoorIndex < questions.length) {
+                            // Reset styles for the next door
+                            document.getElementById('current-door').classList.remove('unlocked');
+                            loadQuestion();
+                        } else {
+                            endGame();
+                        }
+                    }, 2000);
+
+                } else {
+                    // Incorrect answer logic
+                    messageElement.textContent = "Respuesta incorrecta. Inténtalo de nuevo.";
+                    messageElement.classList.add('text-red-600');
+                    
+                    // Style the incorrect button and highlight the correct one
+                    allButtons.forEach(button => {
+                        if (button.textContent === selectedAnswer) {
+                            button.classList.remove('bg-gray-200', 'border-gray-300', 'text-gray-700');
+                            button.classList.add('incorrect', 'bg-red-500', 'border-red-600', 'text-white');
+                        }
+                        if (button.textContent === currentQuestion.correct) {
+                            button.classList.remove('bg-gray-200', 'border-gray-300', 'text-gray-700');
+                            button.classList.add('correct', 'bg-green-500', 'border-green-600', 'text-white');
+                        }
+                    });
+                    
+                    // Re-enable buttons after a short delay
+                    setTimeout(() => {
+                        allButtons.forEach(button => {
+                            button.disabled = false;
+                            button.classList.remove('correct', 'incorrect', 'bg-green-500', 'bg-red-500', 'border-green-600', 'border-red-600', 'text-white');
+                            button.classList.add('bg-gray-200', 'border-gray-300', 'text-gray-700');
+                        });
+                        messageElement.textContent = '';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error("Error checking answer:", error);
+            }
+        }
+
+        // Function to handle the end of the game
+        function endGame() {
+            try {
+                questionTextElement.textContent = "¡Felicidades! ¡Has desbloqueado las 10 puertas y completado el juego!";
+                answersContainer.innerHTML = '';
+                messageElement.textContent = '';
+                currentDoorElement.style.display = 'none';
+                doorGrid.style.display = 'none';
+
+                // Add a restart button
+                const restartButton = document.createElement('button');
+                restartButton.classList.add(
+                    'w-full', 'py-4', 'px-6', 'rounded-full', 'border-2', 'border-blue-500',
+                    'bg-blue-600', 'text-white', 'font-bold', 'text-lg', 'mt-8', 'answer-button'
+                );
+                restartButton.textContent = "Jugar de Nuevo";
+                restartButton.onclick = () => {
+                    currentDoorIndex = 0;
+                    currentDoorElement.style.display = 'flex';
+                    doorGrid.style.display = 'grid';
+                    initializeDoorGrid();
+                    loadQuestion();
+                };
+                answersContainer.appendChild(restartButton);
+            } catch (error) {
+                console.error("Error ending game:", error);
+            }
+        }
+
+        // Initialize the game when the window loads
+        window.onload = function() {
+            initializeDoorGrid();
+            loadQuestion();
+        };
+
+    </script>
+</body>
+</html>
